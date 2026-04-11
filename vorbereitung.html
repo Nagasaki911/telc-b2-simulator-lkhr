@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vorbereitung – telc B2 Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vorbereitung.css">
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="content-config.js"></script>
+</head>
+<body>
+<div class="vb-shell">
+  <div class="vb-orb vb-orb-1" aria-hidden="true"></div>
+  <div class="vb-orb vb-orb-2" aria-hidden="true"></div>
+  <div class="vb-orb vb-orb-3" aria-hidden="true"></div>
+
+  <!-- HEADER -->
+  <header class="vb-header">
+    <div class="vb-container">
+      <div class="vb-header-inner">
+        <div class="vb-logo">
+          <div class="vb-logo-icon">B2</div>
+          <div>
+            <div class="vb-logo-text">telc B2</div>
+            <div class="vb-logo-sub">Vorbereitung</div>
+          </div>
+        </div>
+        <div class="vb-header-actions">
+          <a href="index.html" class="vb-btn-back">← Home</a>
+          <a href="exam.html"  class="vb-btn-back">🎯 Simulation</a>
+          <div class="vb-user-chip" id="user-chip" style="display:none;">
+            <div class="vb-avatar"    id="user-avatar">?</div>
+            <span class="vb-user-name" id="user-name-label">–</span>
+            <span class="vb-badge vb-badge-free" id="user-plan-badge">Free</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="vb-container vb-content">
+
+    <!-- Floating tab island -->
+    <div class="vb-tabs-wrap">
+      <div class="vb-tabs" role="tablist">
+        <button class="vb-tab" data-tab="lesen"      onclick="switchTab('lesen')"      role="tab">
+          <span class="vb-tab-icon">📖</span> Lesen
+          <span class="vb-tab-count">18</span>
+        </button>
+        <button class="vb-tab" data-tab="hoeren"     onclick="switchTab('hoeren')"     role="tab">
+          <span class="vb-tab-icon">🎧</span> Hören
+          <span class="vb-tab-count">15</span>
+        </button>
+        <button class="vb-tab" data-tab="schreiben"  onclick="switchTab('schreiben')"  role="tab">
+          <span class="vb-tab-icon">✍️</span> Schreiben
+          <span class="vb-tab-count">22</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Dynamic section header (JS updates this) -->
+    <div id="section-header" aria-live="polite"></div>
+
+    <!-- Search + sort -->
+    <div class="vb-toolbar">
+      <div class="vb-search-wrap">
+        <span class="vb-search-icon" aria-hidden="true">🔍</span>
+        <input type="search" class="vb-search" id="search-input"
+               placeholder="ابحث عن المواضيع..." oninput="handleSearch(this.value)"
+               aria-label="Suche nach Themen">
+      </div>
+      <button class="vb-sort-btn" onclick="toggleSort()" aria-label="Sortieren">
+        <span>⇅</span> <span>Sort</span>
+      </button>
+    </div>
+
+    <!-- ── LESEN PANEL ─────────────────────────────────── -->
+    <div id="panel-lesen" style="display:none;" role="tabpanel">
+      <!-- 5 sub-chips: Teil 1, Teil 2, Teil 3, SB 1, SB 2 -->
+      <div class="vb-subtabs" id="lesen-subtabs" role="tablist">
+        <button class="vb-subtab active" data-teil="teil1" onclick="switchLesenTeil('teil1')">📰 Teil 1 – Überschriften</button>
+        <button class="vb-subtab"        data-teil="teil2" onclick="switchLesenTeil('teil2')">📄 Teil 2 – Multiple Choice</button>
+        <button class="vb-subtab"        data-teil="teil3" onclick="switchLesenTeil('teil3')">🔗 Teil 3 – Situationen</button>
+        <button class="vb-subtab"        data-teil="sb1"   onclick="switchLesenTeil('sb1')">✏️ SB 1 – Lückentext</button>
+        <button class="vb-subtab"        data-teil="sb2"   onclick="switchLesenTeil('sb2')">📝 SB 2 – Wortpool</button>
+      </div>
+      <div class="vb-list" id="lesen-list"></div>
+    </div>
+
+    <!-- ── HÖREN PANEL ─────────────────────────────────── -->
+    <div id="panel-hoeren" style="display:none;" role="tabpanel">
+      <div class="vb-subtabs" id="hoeren-subtabs" role="tablist">
+        <button class="vb-subtab active" data-teil="teil1" onclick="switchHoerenTeil('teil1')">📻 Teil 1 – Nachrichten</button>
+        <button class="vb-subtab"        data-teil="teil2" onclick="switchHoerenTeil('teil2')">🎙 Teil 2 – Interview</button>
+        <button class="vb-subtab"        data-teil="teil3" onclick="switchHoerenTeil('teil3')">🔊 Teil 3 – Kurztexte</button>
+      </div>
+      <div class="vb-list" id="hoeren-list"></div>
+    </div>
+
+    <!-- ── SCHREIBEN PANEL ─────────────────────────────── -->
+    <div id="panel-schreiben" style="display:none;" role="tabpanel">
+      <div id="schreiben-list-view">
+        <div class="vb-schreiben-grid" id="schreiben-grid"></div>
+      </div>
+      <div id="schreiben-editor-view" style="display:none;">
+        <div class="vb-breadcrumb">
+          <button class="vb-breadcrumb-link" onclick="showSchreibenList()">← Schreiben</button>
+          <span class="vb-breadcrumb-sep">/</span>
+          <span class="vb-breadcrumb-current" id="schreiben-topic-title">–</span>
+        </div>
+        <div class="vb-ai-panel">
+          <div class="vb-ai-header">
+            <div class="vb-ai-title">
+              <span aria-hidden="true">✨</span>
+              <span id="editor-task-label">–</span>
+            </div>
+            <div id="editor-bullets" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+          </div>
+          <div class="vb-ai-body">
+            <div>
+              <textarea class="vb-textarea" id="essay-textarea"
+                        placeholder="Schreiben Sie hier Ihren Brief (150–220 Wörter)…"
+                        oninput="updateWordCount()" aria-label="Brieftext"></textarea>
+              <div class="vb-word-count" id="word-count-display" aria-live="polite">0 / 150–220 Wörter</div>
+              <button class="vb-btn-evaluate" id="eval-btn" onclick="runEvaluation()">
+                <span id="eval-btn-text">✨ KI-Auswertung starten</span>
+                <span id="eval-spinner" class="spinner" style="display:none;" aria-hidden="true"></span>
+              </button>
+            </div>
+            <div class="vb-ai-result">
+              <div class="vb-ai-score-ring" aria-live="polite">
+                <div class="vb-score-num" id="ai-score">–</div>
+                <div class="vb-score-label">/ 45 Punkte</div>
+              </div>
+              <div id="ai-feedback" style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.7;">
+                Tippe deinen Text und klicke auf KI-Auswertung.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+  </main>
+</div>
+
+<!-- PREMIUM MODAL -->
+<div class="vb-modal-backdrop" id="premium-modal"
+     onclick="handleModalBackdropClick(event)"
+     role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+  <div class="vb-modal">
+    <div class="vb-modal-glow" aria-hidden="true"></div>
+    <button class="vb-modal-close" onclick="closePremiumModal()" aria-label="Schließen">✕</button>
+    <div class="vb-modal-icon-wrap" aria-hidden="true">
+      <svg class="vb-modal-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <h2 class="vb-modal-title" id="modal-heading">Premium Access Required</h2>
+    <p class="vb-modal-subtitle">
+      Upgrade your account to unlock all B2 preparation materials —
+      all exams, reading, listening, and all 22 writing topics.
+    </p>
+    <ul class="vb-modal-features" role="list">
+      <li class="vb-modal-feature"><span class="vb-feature-check" aria-hidden="true">✓</span>All Lesen, Hören &amp; Schreiben practice sets</li>
+      <li class="vb-modal-feature"><span class="vb-feature-check" aria-hidden="true">✓</span>30+ Lesen, SB &amp; Hören practice sets</li>
+      <li class="vb-modal-feature"><span class="vb-feature-check" aria-hidden="true">✓</span>22 Schreiben topics with unlimited AI evaluation</li>
+      <li class="vb-modal-feature"><span class="vb-feature-check" aria-hidden="true">✓</span>Progress tracking across all sections</li>
+    </ul>
+    <div class="vb-modal-actions">
+      <button class="vb-btn-upgrade" onclick="handleUpgradeClick()">⭐ Upgrade to Premium</button>
+      <button class="vb-btn-dismiss" onclick="closePremiumModal()">Maybe later</button>
+    </div>
+  </div>
+</div>
+
+<script src="vorbereitung.js"></script>
+</body>
+</html>
