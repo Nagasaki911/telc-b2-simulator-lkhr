@@ -797,22 +797,23 @@ auth.onAuthStateChanged(async user => {
   me = user;
   if (user) {
     try {
-      // Force server read (not cache) so isPremium changes reflect immediately
+      // Force server read — bypasses cache so isPremium:true shows immediately
       const doc = await db.collection('users').doc(user.uid).get({ source: 'server' });
       if (doc.exists) {
         meData = doc.data();
       } else {
-        // Truly new user — create Firestore doc with defaults
+        // Brand-new user — create Firestore doc with Free defaults
         const name = user.displayName || user.email.split('@')[0];
         await createUserDoc(user, name);
         meData = { displayName: name, isPremium: false, evaluationsUsed: 0 };
       }
-    } catch (e) {
+    } catch(e) {
       // Network failure — fall back to cache
       try {
         const cached = await db.collection('users').doc(user.uid).get();
-        meData = cached.exists ? cached.data() : { displayName: user.displayName || '', isPremium: false, evaluationsUsed: 0 };
-      } catch (e2) {
+        meData = cached.exists ? cached.data()
+               : { displayName: user.displayName || '', isPremium: false, evaluationsUsed: 0 };
+      } catch(e2) {
         meData = { displayName: user.displayName || '', isPremium: false, evaluationsUsed: 0 };
       }
     }
@@ -994,5 +995,18 @@ function fbErr(code) {
 function triggerReveal() {
   const els = document.querySelectorAll('.reveal');
   const io  = new IntersectionObserver(entries => {
-    entries.forEach((e, i) => {
-      if (e.isInte
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  els.forEach(el => io.observe(el));
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', triggerReveal);
+</script>
+</body>
+</html>
